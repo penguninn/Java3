@@ -1,0 +1,82 @@
+package bai4;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class Jdbc {
+	static String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+	static String dburl = "jdbc:sqlserver://localhost;database=HRM;encrypt=true;trustServerCertificate=true;";
+	static String username = "sa";
+	static String password = "123";
+	static {
+		try {
+			Class.forName(driver);
+		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static Connection getConnection() throws SQLException {
+		return DriverManager.getConnection(dburl, username, password);
+	}
+
+	public static int executeUpdate(String sql) throws SQLException {
+		Connection connection = getConnection();
+		Statement statement = connection.createStatement();
+		return statement.executeUpdate(sql);
+	}
+
+	public static ResultSet executeQuery(String sql) throws SQLException {
+		Connection connection = getConnection();
+		Statement statement = connection.createStatement();
+		return statement.executeQuery(sql);
+	}
+
+	public static int executeUpdate(String sql, Object... values) throws SQLException {
+		Connection connection = getConnection();
+		CallableStatement statement = connection.prepareCall(sql);
+		for (int i = 0; i < values.length; i++) {
+			statement.setObject(i + 1, values[i]);
+		}
+		return statement.executeUpdate();
+	}
+
+	public static ResultSet executeQuery(String sql, Object... values) throws SQLException {
+		Connection connection = getConnection();
+		CallableStatement statement = connection.prepareCall(sql);
+		for (int i = 0; i < values.length; i++) {
+			statement.setObject(i + 1, values[i]);
+		}
+		return statement.executeQuery();
+	}
+
+	public static void main(String[] args) {
+		try {
+			String sql = "{CALL spSelectById(?)}";
+			Object[] values = { "D09" };
+			ResultSet resultSet = Jdbc.executeQuery(sql, values);
+			while (resultSet.next()) {
+				String id = resultSet.getString(1);
+				String name = resultSet.getString(2);
+				String desc = resultSet.getString(3);
+				System.out.println(id + " " + name + " " + desc);
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try {
+			String sql = "{CALL spUpdate(?, ?, ?)}";
+			Object[] values = { "D09", "Diddy", "Anh yeu em 1000 bayby oils"};
+			int rows = Jdbc.executeUpdate(sql, values);
+			System.out.println(rows);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+}
